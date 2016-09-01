@@ -70,7 +70,7 @@ class FilesDispatcher implements CommandLineRunner {
             ++count
             long nextRecordPos = randomAccess.getFilePointer()
 
-            compareNextRecords(utfLine, randomAccess)
+            compareNextRecords(utfLine, randomAccess, duplicatesRepo)
 
             randomAccess.seek(nextRecordPos)
         }
@@ -80,7 +80,7 @@ class FilesDispatcher implements CommandLineRunner {
 
     }
 
-    def compareNextRecords(String record, RandomAccessFile file) {
+    def compareNextRecords(String record, RandomAccessFile file, DuplicatesRepo duplicatesRepo) {
         String line
         int count = 0
 
