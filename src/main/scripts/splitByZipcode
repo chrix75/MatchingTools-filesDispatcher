@@ -1,0 +1,48 @@
+#!/bin/bash
+
+echo "Usage: mtcFile partFile zipcodeField" 
+
+INP=$1
+OUT=$2 # output pattern file
+declare -i ZIPCODE=$3
+LST_FILES=${OUT}.lst
+
+if [ $ZIPCODE -eq 0 ]; then
+    echo "No valid zipcode field provided" >&2
+    exit 1
+fi
+
+if [ ! -f "$INP" ]; then
+    echo "File $INP not found" >&2
+    exit 1
+fi
+
+sort -t\; -k$ZIPCODE,$ZIPCODE "$INP" | awk -F \; -v zipcode=$ZIPCODE -v out=$OUT -v lst=$LST_FILES '
+BEGIN {
+   preZipcode = 0
+}
+
+$zipcode ~ /^[0-9]+$/ && prevZipcode > 0 {
+   if ($zipcode != prevZipcode) {
+      close(outputFile)
+      prevZipcode = $zipcode
+      outputFile = out "_" prevZipcode
+
+      print outputFile > lst
+   }
+
+   print $0 >outputFile
+}
+
+$zipcode ~ /^[0-9]+$/ && prevZipcode == 0 {
+   prevZipcode = $zipcode
+   outputFile = out "_" prevZipcode
+   print $0 >outputFile
+   
+   print outputFile > lst
+}
+' || {
+    echo "Processing file $INP failed" >&2
+    exit 1
+}
+    

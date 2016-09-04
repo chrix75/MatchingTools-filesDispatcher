@@ -1,0 +1,15 @@
+#!/bin/bash
+
+BIN_DIR=`dirname $0`
+
+echo 'Usage: city siret recid filesList'
+
+declare -i CITY_FIELD=$1
+declare -i SIRET_FIELD=$2
+declare -i RECID_FIELD=$3
+LST_FILE=$4
+
+java -jar $BIN_DIR/filesdispatcher-1.0-SNAPSHOT.jar --city $CITY_FIELD --siret $SIRET_FIELD --recid $RECID_FIELD $LST_FILE >/dev/null || {
+    exit 1
+}
+

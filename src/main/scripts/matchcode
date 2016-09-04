@@ -1,0 +1,123 @@
+#!/bin/bash
+
+BIN_LIB=`dirname $0`
+echo "Usage: matchcode --addrecid -a 1,2,3 -n5,6 -o mtcFile -i inpFile"
+
+addRecordIdOption()
+{
+    for arg in $*; do
+	if [ "$arg" = "--addrecid" ]; then
+	    return 0
+	fi
+    done
+
+    return 1
+}
+
+getOptions()
+{
+    local option="$1"
+    shift 1
+
+    for i in `seq 1 $#`; do
+	if [ "$1" = "$option" ]; then
+	    shift 1
+	    echo "$1"
+	    return 0
+	fi
+
+	shift 1
+    done
+    
+    return 1
+
+}
+
+getAddressFields()
+{
+    getOptions "-a" $*
+}
+
+
+getNamesField()
+{
+    getOptions "-n" $*
+}
+
+getInput()
+{
+    getOptions "-i" $*
+}
+
+getOutput()
+{
+    getOptions "-o" $*
+}
+
+cleanFile()
+{
+    local inputFile="$1"
+    local resultFile="$2"
+    local numberFile="$3"
+
+    if [ -z "$inputFile" ] || [ ! -f "$inputFile" ]; then
+	return 1
+    fi
+    
+    if [ $numberFile -eq 0 ]; then
+	tr "[a-z]" "[A-Z]" < "$inputFile" |
+	    tr -d "\r" |
+	    tr "/,-.()\[\]\t" " " |
+	    tr "éèêë" "E" |
+	    tr "îï" "I" |
+	    tr "âà" "A" |
+	    tr "ô" "O" |
+	    tr "ùû" "U" |
+	    sed -e 's/  */ /g'  > "$resultFile"
+    else
+	tr "[a-z]" "[A-Z]" < "$inputFile" |
+	    tr -d "\r" |
+	    tr "/,-.()\[\]\t" " " |
+	    tr "éèêë" "E" |
+	    tr "îï" "I" |
+	    tr "âà" "A" |
+	    tr "ô" "O" |
+	    tr "ùû" "U" |
+	    sed -e 's/  */ /g' |
+	    awk '{ print $0 ";" NR }' > "$resultFile" 
+    fi
+}
+
+numberFile()
+{
+    local inp="$1"
+    local out="$2"
+
+    awk '{ print $0 ";" NR }' "$inp" > "$out"
+}
+
+if addRecordIdOption $*; then
+    addRecId=1
+else
+    addRecId=0
+fi
+
+addrFields=`getAddressFields $*`
+nameFields=`getNamesField $*`
+inputFile=`getInput $*`
+outputFile=`getOutput $*`
+
+tmpInputFile="${inputFile}-a"
+cleanFile "$inputFile" "$tmpInputFile" $addRecId || exit 1
+
+cmd="java -jar $BIN_LIB/matchcoder-1.0-SNAPSHOT.jar"
+
+if [ ! -z "$addrFields" ]; then
+    cmd="$cmd -a $addrFields"
+fi
+
+if [ ! -z "$nameFields" ]; then
+    cmd="$cmd -n $nameFields"
+fi
+
+$cmd $outputFile $tmpInputFile || exit 1
