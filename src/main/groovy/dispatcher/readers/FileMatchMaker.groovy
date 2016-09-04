@@ -83,7 +83,9 @@ class FileMatchMaker implements MatchMaker {
 
                 def comparedRecord = buildRecord(comparedFields)
 
-                action(refRecord, comparedRecord)
+                if (refRecord && comparedRecord) {
+                    action(refRecord, comparedRecord)
+                }
             }
         }
     }
