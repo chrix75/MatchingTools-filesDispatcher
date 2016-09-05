@@ -11,7 +11,6 @@ import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 
 import static groovyx.gpars.GParsPool.withPool
-
 /**
  * Created by batman on 28/08/2016.
  */
@@ -23,8 +22,6 @@ class FilesDispatcher implements CommandLineRunner {
     private int siretIdx
     private int cityIdx
     private int recIdIdx
-
-    private CompanyMatcher companyMatcher = new CompanyMatcher()
 
     FilesDispatcher(int threadsNumber = 0) {
         this.threadsNumber = threadsNumber
@@ -52,6 +49,8 @@ class FilesDispatcher implements CommandLineRunner {
         def matchMaker = new FileMatchMaker(f, recIdIdx, siretIdx, cityIdx)
 
         def duplicatesRepo = new MemoryDuplicatesRepo()
+
+        def CompanyMatcher companyMatcher = new CompanyMatcher()
 
         matchMaker.processCouple(duplicatesRepo) {
             ref, other ->
