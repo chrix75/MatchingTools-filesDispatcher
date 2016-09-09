@@ -57,7 +57,7 @@ class FilesDispatcher implements CommandLineRunner {
 
                 def match = companyMatcher.match(ref, other)
 
-                println "Compare [$ref] with [$other] => $match"
+                //println "Compare [$ref] with [$other] => $match"
 
                 if (match == Match.MATCH) {
                     duplicatesRepo.addDuplicates(ref.recorId, other.recorId)

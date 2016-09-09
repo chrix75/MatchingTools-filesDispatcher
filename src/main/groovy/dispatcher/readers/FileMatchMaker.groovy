@@ -24,6 +24,9 @@ class FileMatchMaker implements MatchMaker {
 
     UnmatchcoderAddress unmatchcoderAddress = new UnmatchcoderAddress()
     UnmatchcoderCompanyName unmatchcoderCompanyName = new UnmatchcoderCompanyName()
+    
+    final Record refRecord
+    final Record comparedRecord
 
 
     FileMatchMaker(File f, int recIdIdx, int siretIdx, int cityIdx) {
@@ -31,6 +34,9 @@ class FileMatchMaker implements MatchMaker {
         this.recIdIdx = recIdIdx
         this.siretIdx = siretIdx
         this.cityIdx = cityIdx
+        
+        this.refRecord = new Record()
+        this.comparedRecord = new Record()
     }
 
     @Override
@@ -44,7 +50,9 @@ class FileMatchMaker implements MatchMaker {
                 def utfLine = convertIntoUtf8(line)
                 long nextRecordPos = randomAccess.getFilePointer()
 
-                compareNextRecords(utfLine, randomAccess, coupleAction)
+                def bufferedReader = new BufferedReader(new FileReader(randomAccess.FD))
+
+                compareNextRecords(utfLine, bufferedReader, coupleAction)
 
                 randomAccess.seek(nextRecordPos)
             }
@@ -53,7 +61,7 @@ class FileMatchMaker implements MatchMaker {
         }
     }
 
-    def compareNextRecords(String record, RandomAccessFile file, Closure action) {
+    def compareNextRecords(String record, BufferedReader file, Closure action) {
         String line
 
         def refFields = record.split(';')
@@ -64,7 +72,7 @@ class FileMatchMaker implements MatchMaker {
         }
 
         if (!duplicatesRepo.getGroupId(Long.parseLong(refFields[recIdIdx]))) {
-            def refRecord = buildRecord(refFields)
+            def refRecord = buildRefRecord(refFields)
 
             while ((line = file.readLine())) {
                 def utfLine = convertIntoUtf8(line)
@@ -81,21 +89,43 @@ class FileMatchMaker implements MatchMaker {
                     continue
                 }
 
-                def comparedRecord = buildRecord(comparedFields)
+                def comparedRecord = buildComparedRecord(comparedFields)
 
                 action(refRecord, comparedRecord)
             }
         }
     }
 
-    Record buildRecord(String[] fields) {
+    Record buildRefRecord(String[] fields) {
         def refAddresses = extractAddresses(fields)
         def refCompanyNames = extractCompanyNames(fields)
         def siret = siretIdx >= 0 && siretIdx < fields.size() ? fields[siretIdx] : ""
         def city = cityIdx < fields.size() ? fields[cityIdx] : ""
         def recId = Long.parseLong(fields[recIdIdx])
 
-        new Record(recId, refCompanyNames, refAddresses, siret, city)
+        refRecord.addresses = refAddresses
+        refRecord.names = refCompanyNames
+        refRecord.siret = siret
+        refRecord.city = city
+        refRecord.recorId = recId
+
+        refRecord
+    }
+
+    Record buildComparedRecord(String[] fields) {
+        def refAddresses = extractAddresses(fields)
+        def refCompanyNames = extractCompanyNames(fields)
+        def siret = siretIdx >= 0 && siretIdx < fields.size() ? fields[siretIdx] : ""
+        def city = cityIdx < fields.size() ? fields[cityIdx] : ""
+        def recId = Long.parseLong(fields[recIdIdx])
+
+        comparedRecord.addresses = refAddresses
+        comparedRecord.names = refCompanyNames
+        comparedRecord.siret = siret
+        comparedRecord.city = city
+        comparedRecord.recorId = recId
+
+        comparedRecord
     }
 
     String convertIntoUtf8(String inp) {
@@ -106,13 +136,30 @@ class FileMatchMaker implements MatchMaker {
         new String(bytes, "UTF-8");
     }
 
+    List extracItem(String[] fields, String prefix, Closure fn) {
+        def result = []
+        boolean found = false
+        for (int i = fields.length - 1; i >= 0; --i) {
+            def it = fields[i]
+            if (it.startsWith(prefix)) {
+                found = true
+                result << fn(it)
+            } else if (found) {
+                break
+            }
+        }
+
+        result
+    }
 
     List<CompanyName> extractCompanyNames(String[] fields) {
-        fields.findAll { it.startsWith('RS/') }.collect { unmatchcoderCompanyName.unmatchcode(it)}
+        extracItem(fields, 'RS/', unmatchcoderCompanyName.&unmatchcode)
+        //fields.findAll { it.startsWith('RS/') }.collect { unmatchcoderCompanyName.unmatchcode(it)}
     }
 
     List<Address> extractAddresses(String[] fields) {
-        fields.findAll { it.startsWith('ADR/') }.collect { unmatchcoderAddress.unmatchcode(it)}
+        extracItem(fields, 'ADR/', unmatchcoderAddress.&unmatchcode)
+        //fields.findAll { it.startsWith('ADR/') }.collect { unmatchcoderAddress.unmatchcode(it)}
     }
 
 
