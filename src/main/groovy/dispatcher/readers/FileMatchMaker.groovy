@@ -6,8 +6,10 @@ import dispatcher.services.UnmatchcoderCompanyName
 import domain.Address
 import domain.CompanyName
 import domain.Record
+import matchingtools.matching.CompanyMatcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import services.ObjectsPool
 
 /**
  * Created by Christian Sperandio on 04/09/2016.
@@ -24,9 +26,12 @@ class FileMatchMaker implements MatchMaker {
 
     UnmatchcoderAddress unmatchcoderAddress = new UnmatchcoderAddress()
     UnmatchcoderCompanyName unmatchcoderCompanyName = new UnmatchcoderCompanyName()
-    
+
     final Record refRecord
     final Record comparedRecord
+
+
+    final ObjectsPool<CompanyName> companyNamePool
 
 
     FileMatchMaker(File f, int recIdIdx, int siretIdx, int cityIdx) {
@@ -34,9 +39,12 @@ class FileMatchMaker implements MatchMaker {
         this.recIdIdx = recIdIdx
         this.siretIdx = siretIdx
         this.cityIdx = cityIdx
-        
+
         this.refRecord = new Record()
         this.comparedRecord = new Record()
+
+
+        companyNamePool = new ObjectsPool<>( {new CompanyName()} )
     }
 
     @Override
@@ -70,6 +78,7 @@ class FileMatchMaker implements MatchMaker {
             logger.error("Ref fields $refFields has no enough field to get the record ID (recIdIdx=$recIdIdx)")
             return
         }
+
 
         if (!duplicatesRepo.getGroupId(Long.parseLong(refFields[recIdIdx]))) {
             def refRecord = buildRefRecord(refFields)
@@ -125,7 +134,9 @@ class FileMatchMaker implements MatchMaker {
         comparedRecord.city = city
         comparedRecord.recorId = recId
 
-        comparedRecord
+        unmatchcoderAddress.reinit()
+
+        return comparedRecord
     }
 
     String convertIntoUtf8(String inp) {

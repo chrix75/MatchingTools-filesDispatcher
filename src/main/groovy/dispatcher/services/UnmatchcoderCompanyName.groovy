@@ -22,4 +22,9 @@ class UnmatchcoderCompanyName implements Unmatchcoder<CompanyName> {
 
         new CompanyName(isService, words)
     }
+
+    @Override
+    def reinit() {
+        return null
+    }
 }

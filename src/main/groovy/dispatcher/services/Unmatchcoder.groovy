@@ -6,4 +6,5 @@ package dispatcher.services
 interface Unmatchcoder<T> {
     T unmatchcode(String field)
 
+    def reinit()
 }
