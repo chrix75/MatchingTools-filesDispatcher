@@ -72,7 +72,9 @@ class FileMatchMaker implements MatchMaker {
     def compareNextRecords(String record, BufferedReader file, Closure action) {
         String line
 
-        def refFields = record.split(';')
+        def refFields = record.split(';', -1)
+
+        def refKeys = extractKeys(refFields)
 
         if (refFields.length <= recIdIdx) {
             logger.error("Ref fields $refFields has no enough field to get the record ID (recIdIdx=$recIdIdx)")
@@ -86,7 +88,15 @@ class FileMatchMaker implements MatchMaker {
             while ((line = file.readLine())) {
                 def utfLine = convertIntoUtf8(line)
 
-                def comparedFields = utfLine.split(';')
+                def comparedFields = utfLine.split(';', -1)
+
+                def comparedKeys = extractKeys(comparedFields)
+
+                if (!validateKeys(refKeys, comparedKeys)) {
+                    continue
+                }
+
+
 
                 if (comparedFields.length <= recIdIdx) {
                     logger.error("Compared fields $refFields has no enough field to get the record ID (recIdIdx=$recIdIdx)")
@@ -103,6 +113,14 @@ class FileMatchMaker implements MatchMaker {
                 action(refRecord, comparedRecord)
             }
         }
+    }
+
+    boolean validateKeys(List<String> keys1, List<String> keys2) {
+        keys1.any { keys2.contains(it) }
+    }
+
+    List extractKeys(String[] fields) {
+        extracItem(fields, 'KEY/') { it.replace('KEY/', '') }
     }
 
     Record buildRefRecord(String[] fields) {
