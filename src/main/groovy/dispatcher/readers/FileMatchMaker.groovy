@@ -96,8 +96,6 @@ class FileMatchMaker implements MatchMaker {
                     continue
                 }
 
-
-
                 if (comparedFields.length <= recIdIdx) {
                     logger.error("Compared fields $refFields has no enough field to get the record ID (recIdIdx=$recIdIdx)")
                     continue
@@ -120,7 +118,7 @@ class FileMatchMaker implements MatchMaker {
     }
 
     List extractKeys(String[] fields) {
-        extracItem(fields, 'KEY/') { it.replace('KEY/', '') }
+        extracItem(fields, 'KAD/') { it.replace('KAD/', '') }
     }
 
     Record buildRefRecord(String[] fields) {
@@ -183,12 +181,10 @@ class FileMatchMaker implements MatchMaker {
 
     List<CompanyName> extractCompanyNames(String[] fields) {
         extracItem(fields, 'RS/', unmatchcoderCompanyName.&unmatchcode)
-        //fields.findAll { it.startsWith('RS/') }.collect { unmatchcoderCompanyName.unmatchcode(it)}
     }
 
     List<Address> extractAddresses(String[] fields) {
         extracItem(fields, 'ADR/', unmatchcoderAddress.&unmatchcode)
-        //fields.findAll { it.startsWith('ADR/') }.collect { unmatchcoderAddress.unmatchcode(it)}
     }
 
 
