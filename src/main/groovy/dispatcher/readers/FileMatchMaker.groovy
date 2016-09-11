@@ -6,7 +6,6 @@ import dispatcher.services.UnmatchcoderCompanyName
 import domain.Address
 import domain.CompanyName
 import domain.Record
-import matchingtools.matching.CompanyMatcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import services.ObjectsPool
@@ -74,7 +73,8 @@ class FileMatchMaker implements MatchMaker {
 
         def refFields = record.split(';', -1)
 
-        def refKeys = extractKeys(refFields)
+        def refAddressKeys = extractAddressKeys(refFields)
+        def refNameKeys = extractNameKeys(refFields)
 
         if (refFields.length <= recIdIdx) {
             logger.error("Ref fields $refFields has no enough field to get the record ID (recIdIdx=$recIdIdx)")
@@ -90,9 +90,10 @@ class FileMatchMaker implements MatchMaker {
 
                 def comparedFields = utfLine.split(';', -1)
 
-                def comparedKeys = extractKeys(comparedFields)
+                def comparedAddressKeys = extractAddressKeys(comparedFields)
+                def comparedNameKeys = extractNameKeys(comparedFields)
 
-                if (!validateKeys(refKeys, comparedKeys)) {
+                if (!validateKeys(refAddressKeys, comparedAddressKeys) || !validateKeys(refNameKeys, comparedNameKeys)) {
                     continue
                 }
 
@@ -117,8 +118,12 @@ class FileMatchMaker implements MatchMaker {
         keys1.any { keys2.contains(it) }
     }
 
-    List extractKeys(String[] fields) {
+    List extractAddressKeys(String[] fields) {
         extracItem(fields, 'KAD/') { it.replace('KAD/', '') }
+    }
+
+    List extractNameKeys(String[] fields) {
+        extracItem(fields, 'KNA/') { it.replace('KNA/', '') }
     }
 
     Record buildRefRecord(String[] fields) {
