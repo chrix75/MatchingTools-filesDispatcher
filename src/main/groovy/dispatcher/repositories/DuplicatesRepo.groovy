@@ -5,8 +5,8 @@ package dispatcher.repositories
  */
 interface DuplicatesRepo {
 
-    long addDuplicates(long recid1, long recid2)
-    long getGroupId(long recid)
+    UUID addDuplicates(long recid1, long recid2)
+    UUID getGroupId(long recid)
 
-    Map<Long, Long> getDuplicates()
+    Map<Long, UUID> getDuplicates()
 }

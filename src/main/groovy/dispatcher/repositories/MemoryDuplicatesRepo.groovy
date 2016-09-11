@@ -4,12 +4,11 @@ package dispatcher.repositories
  * Created by batman on 29/08/2016.
  */
 class MemoryDuplicatesRepo implements DuplicatesRepo {
-    private Map<Long, Long> groups = new HashMap<>()
-    long id = 0
+    private Map<Long, UUID> groups = new HashMap<>()
 
     @Override
-    long addDuplicates(long recid1, long recid2) {
-        def groupId = ++id
+    UUID addDuplicates(long recid1, long recid2) {
+        def groupId = UUID.randomUUID()
         groups.put(recid1, groupId)
         groups.put(recid2, groupId)
 
@@ -17,13 +16,12 @@ class MemoryDuplicatesRepo implements DuplicatesRepo {
     }
 
     @Override
-    long getGroupId(long recid) {
-        def found = groups.get(recid)
-        return !found ? 0 : found
+    UUID getGroupId(long recid) {
+        groups.get(recid)
     }
 
     @Override
-    Map<Long, Long> getDuplicates() {
+    Map<Long, UUID> getDuplicates() {
         return groups
     }
 }
