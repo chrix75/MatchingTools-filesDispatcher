@@ -8,11 +8,28 @@ class MemoryDuplicatesRepo implements DuplicatesRepo {
 
     @Override
     UUID addDuplicates(long recid1, long recid2) {
-        def groupId = UUID.randomUUID()
+        def groupId = fetchUUID(recid1, recid2)
+
         groups.put(recid1, groupId)
         groups.put(recid2, groupId)
 
         return groupId
+    }
+
+    UUID fetchUUID(long id1, long id2) {
+        UUID uuid
+
+        uuid = getGroupId(id1)
+        if (uuid) {
+            return uuid
+        }
+
+        uuid = getGroupId(id2)
+        if (uuid) {
+            return uuid
+        }
+
+        UUID.randomUUID()
     }
 
     @Override
