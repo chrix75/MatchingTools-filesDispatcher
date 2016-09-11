@@ -2,10 +2,13 @@ package dispatcher
 
 import dispatcher.readers.FileMatchMaker
 import dispatcher.repositories.MemoryDuplicatesRepo
+import dispatcher.services.ConsoleDuplicatesFreezer
+import dispatcher.services.DuplicatesFreezer
 import domain.Match
 import matchingtools.matching.CompanyMatcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -23,9 +26,14 @@ class FilesDispatcher implements CommandLineRunner {
     private int cityIdx
     private int recIdIdx
 
+    @Autowired
+    DuplicatesFreezer duplicatesFreezer
+
     FilesDispatcher(int threadsNumber = 0) {
         this.threadsNumber = threadsNumber
     }
+
+
 
     def processFiles(List<File> files, int siretIdx, int cityIdx, int recIdIdx) {
         this.siretIdx = siretIdx
@@ -41,6 +49,9 @@ class FilesDispatcher implements CommandLineRunner {
                 files.eachParallel { processOneFile(it) }
             }
         }
+
+        duplicatesFreezer.markAsFinished()
+
     }
 
     def processOneFile(File f) {
@@ -65,8 +76,7 @@ class FilesDispatcher implements CommandLineRunner {
 
         }
 
-        logger.info("Duplicates: ${duplicatesRepo.getDuplicates()}")
-
+        duplicatesFreezer.freeze(duplicatesRepo)
     }
 
     public static void main(String[] args) {
