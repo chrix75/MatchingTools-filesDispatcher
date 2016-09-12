@@ -115,7 +115,7 @@ class FileMatchMaker implements MatchMaker {
     }
 
     boolean validateKeys(List<String> keys1, List<String> keys2) {
-        keys1.any { keys2.contains(it) }
+        !keys1 || !keys2 || keys1.any { keys2.contains(it) }
     }
 
     List extractAddressKeys(String[] fields) {
