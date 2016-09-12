@@ -170,13 +170,11 @@ class FileMatchMaker implements MatchMaker {
 
     List extracItem(String[] fields, String prefix, Closure fn) {
         def result = []
-        boolean found = false
         for (int i = fields.length - 1; i >= 0; --i) {
             def it = fields[i]
             if (it.startsWith(prefix)) {
-                found = true
                 result << fn(it)
-            } else if (found) {
+            } else if (!it.contains('/')) {
                 break
             }
         }
