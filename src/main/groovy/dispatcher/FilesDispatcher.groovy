@@ -2,7 +2,6 @@ package dispatcher
 
 import dispatcher.readers.FileMatchMaker
 import dispatcher.repositories.MemoryDuplicatesRepo
-import dispatcher.services.ConsoleDuplicatesFreezer
 import dispatcher.services.DuplicatesFreezer
 import domain.Match
 import matchingtools.matching.CompanyMatcher
@@ -40,18 +39,19 @@ class FilesDispatcher implements CommandLineRunner {
         this.cityIdx = cityIdx
         this.recIdIdx = recIdIdx
 
-        if (threadsNumber) {
-            withPool(threadsNumber) {
-                files.eachParallel { processOneFile(it) }
+        try {
+            if (threadsNumber) {
+                withPool(threadsNumber) {
+                    files.eachParallel { processOneFile(it) }
+                }
+            } else {
+                withPool {
+                    files.eachParallel { processOneFile(it) }
+                }
             }
-        } else {
-            withPool {
-                files.eachParallel { processOneFile(it) }
-            }
+        } finally {
+            duplicatesFreezer.markAsFinished()
         }
-
-        duplicatesFreezer.markAsFinished()
-
     }
 
     def processOneFile(File f) {
